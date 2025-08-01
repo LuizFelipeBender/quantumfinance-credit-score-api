@@ -1,3 +1,12 @@
+terraform {
+  backend "s3" {
+    bucket         = "quantumfinance-terraform-state"
+    key            = "quantumfinance-credit-score-api/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
 
 provider "aws" {
   region = "us-east-1"
