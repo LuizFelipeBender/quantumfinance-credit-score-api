@@ -99,6 +99,9 @@ def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar modelos: {str(e)}")
 
+@app.get("/favicon.ico")
+async def favicon():
+    return {}
 
 # Lambda handler para AWS
 handler = Mangum(app)
