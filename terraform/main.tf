@@ -63,12 +63,12 @@ resource "aws_iam_role_policy_attachment" "attach_s3" {
 
 resource "aws_lambda_function" "quantum_api_lambda" {
   function_name = "quantum-api"
-  handler = "api.main.handler"
   image_uri     = var.image_uri
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
   timeout       = 30
 }
+
 
 resource "aws_apigatewayv2_api" "quantum_api" {
   name          = "quantum-api"
