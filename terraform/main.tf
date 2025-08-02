@@ -66,8 +66,14 @@ resource "aws_lambda_function" "quantum_api_lambda" {
   image_uri     = var.image_uri
   role          = aws_iam_role.lambda_exec_role.arn
   package_type  = "Image"
-  timeout       = 30
+  timeout       = 800
+  memory_size   = 1280  
+
+  ephemeral_storage {
+    size = 5120         
+  }
 }
+
 
 
 resource "aws_apigatewayv2_api" "quantum_api" {
