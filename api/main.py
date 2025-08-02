@@ -8,6 +8,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from mangum import Mangum
 from api.schemas import InputData  # Certifique-se de que o caminho está correto
+from fastapi.responses import FileResponse
+
 
 # MLflow tracking URI
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
@@ -58,6 +60,10 @@ if model:
 def health():
     return {"status": "ok"}
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
+
 # Endpoint de predição
 @app.post("/predict")
 def predict(
@@ -99,9 +105,6 @@ def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar modelos: {str(e)}")
 
-@app.get("/favicon.ico")
-async def favicon():
-    return {}
 
 # Lambda handler para AWS
 handler = Mangum(app)
