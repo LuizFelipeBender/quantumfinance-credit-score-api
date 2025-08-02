@@ -1,22 +1,28 @@
-
-import mlflow
-import mlflow.sklearn
+import os
+import boto3
+import joblib
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from api.schemas import InputData
-import pandas as pd
-import os
 from mangum import Mangum
 
-mlflow.set_registry_uri(os.environ.get("MLFLOW_S3_URI"))
+# Parâmetros de configuração
+BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "quantumfinance-mlflow-artifacts")
+MODEL_KEY = os.getenv("MODEL_KEY", "models/model_latest.pkl")
+LOCAL_PATH = "/tmp/model.pkl"
 
 app = FastAPI()
 
+# Inicializa o modelo
+model = None
 try:
-    model = mlflow.sklearn.load_model("models:/QuantumCreditScoreModel/Production")
+    print("📥 Baixando modelo do S3...")
+    boto3.client("s3").download_file(BUCKET_NAME, MODEL_KEY, LOCAL_PATH)
+    model = joblib.load(LOCAL_PATH)
+    print("✅ Modelo carregado com sucesso!")
 except Exception as e:
-    model = None
-    print("Erro ao carregar modelo do MLflow:", e)
+    print("❌ Erro ao carregar modelo do S3:", e)
 
 @app.get("/")
 def health():
