@@ -95,6 +95,11 @@ resource "aws_apigatewayv2_route" "route" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+resource "aws_cloudwatch_log_group" "lambda_log" {
+  name              = "/aws/lambda/${aws_lambda_function.quantum_api_lambda.function_name}"
+  retention_in_days = 7
+}
+
 output "api_url" {
   value = aws_apigatewayv2_api.quantum_api.api_endpoint
 }
