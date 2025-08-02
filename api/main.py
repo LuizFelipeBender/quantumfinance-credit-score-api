@@ -65,7 +65,7 @@ def predict(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     token = credentials.credentials
-    if token != SECRET_TOKEN:
+    if token not in SECRET_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     if not model:
