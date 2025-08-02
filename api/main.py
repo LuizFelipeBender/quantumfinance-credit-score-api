@@ -9,6 +9,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from mangum import Mangum
 from schemas import InputData
 from fastapi.responses import FileResponse
+print("📂 Conteúdo do diretório atual:", os.listdir())
+print("📂 Conteúdo do diretório /var/task/api:", os.listdir("/var/task/api"))
 
 
 # MLflow tracking URI
