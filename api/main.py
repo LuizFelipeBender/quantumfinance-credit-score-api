@@ -7,7 +7,7 @@ import mlflow
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from mangum import Mangum
-from api.schemas import InputData  # Certifique-se de que o caminho está correto
+from schemas import InputData
 from fastapi.responses import FileResponse
 
 
