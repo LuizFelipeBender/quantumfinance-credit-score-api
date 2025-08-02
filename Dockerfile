@@ -3,8 +3,9 @@ FROM public.ecr.aws/lambda/python:3.10
 # Define diretório de trabalho
 WORKDIR /var/task
 
-# Copia tudo
-COPY . .
+COPY api/ /var/task/api/
+COPY requirements.txt .
+
 
 # Define PYTHONPATH
 ENV PYTHONPATH="${PYTHONPATH}:/var/task"

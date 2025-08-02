@@ -60,9 +60,14 @@ if model:
 def health():
     return {"status": "ok"}
 
+
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("favicon.ico")
+    favicon_path = os.path.join(os.path.dirname(__file__), "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return {}
+
 
 # Endpoint de predição
 @app.post("/predict")
