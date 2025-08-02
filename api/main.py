@@ -1,42 +1,92 @@
 import os
-import boto3
-import joblib
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from api.schemas import InputData
+import joblib
+import boto3
+import tempfile
+import mlflow
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from mangum import Mangum
+from api.schemas import InputData  # Certifique-se de que o caminho está correto
 
-# Parâmetros de configuração
-BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "quantumfinance-mlflow-artifacts")
-MODEL_KEY = os.getenv("MODEL_KEY", "models/model_latest.pkl")
-LOCAL_PATH = "/tmp/model.pkl"
+# MLflow tracking URI
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+# Inicializa FastAPI
 app = FastAPI()
 
-# Inicializa o modelo
-model = None
-try:
-    print("📥 Baixando modelo do S3...")
-    boto3.client("s3").download_file(BUCKET_NAME, MODEL_KEY, LOCAL_PATH)
-    model = joblib.load(LOCAL_PATH)
-    print("✅ Modelo carregado com sucesso!")
-except Exception as e:
-    print("❌ Erro ao carregar modelo do S3:", e)
+# Segurança via Bearer Token
+security = HTTPBearer()
+SECRET_TOKEN = "secret-token-123"  # Pode ser movido para variável de ambiente
 
+# Parâmetros do S3
+S3_BUCKET = "quantumfinance-mlflow-artifacts"
+S3_KEY = "models/model_latest.pkl"
+
+# Função para carregar modelo do S3
+def load_model_from_s3():
+    try:
+        s3 = boto3.client("s3")
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            s3.download_fileobj(S3_BUCKET, S3_KEY, tmp)
+            tmp_path = tmp.name
+        print(f"✅ Modelo carregado de {S3_BUCKET}/{S3_KEY}")
+        return joblib.load(tmp_path)
+    except Exception as e:
+        print(f"❌ Erro ao carregar modelo do S3: {e}")
+        return None
+
+# Carrega o modelo na inicialização
+model = load_model_from_s3()
+expected_columns = None
+
+if model:
+    try:
+        if hasattr(model, "feature_names_in_"):
+            expected_columns = list(model.feature_names_in_)
+        elif hasattr(model, "named_steps") and hasattr(model.named_steps, "preprocessor"):
+            expected_columns = model.named_steps["preprocessor"].get_feature_names_out().tolist()
+        print("📊 Colunas esperadas pelo modelo:", expected_columns)
+    except Exception as e:
+        print("⚠️ Não foi possível identificar colunas esperadas:", e)
+
+# Healthcheck
 @app.get("/")
 def health():
     return {"status": "ok"}
 
+# Endpoint de predição
 @app.post("/predict")
-async def predict(data: InputData, request: Request):
-    if model is None:
-        raise HTTPException(status_code=500, detail="Modelo não disponível")
-    try:
-        df = pd.DataFrame([data.dict()])
-        pred = model.predict(df)[0]
-        return {"score_class": int(pred)}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
+def predict(
+    input: InputData,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    token = credentials.credentials
+    if token != SECRET_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
+    if not model:
+        raise HTTPException(status_code=500, detail="Modelo indisponível")
+
+    try:
+        data = pd.DataFrame([input.dict()])
+
+        # Validação de colunas esperadas
+        if expected_columns:
+            missing = set(expected_columns) - set(data.columns)
+            if missing:
+                raise HTTPException(status_code=400, detail=f"columns are missing: {missing}")
+
+        prediction = model.predict(data)[0]
+        return {"score": str(prediction)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Lambda handler para AWS
 handler = Mangum(app)
+
+# Execução local
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
