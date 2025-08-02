@@ -85,6 +85,21 @@ def predict(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/models")
+def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    if token not in SECRET_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        s3 = boto3.client("s3")
+        response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="models/")
+        files = [obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".pkl")]
+        return {"available_models": files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar modelos: {str(e)}")
+
+
 # Lambda handler para AWS
 handler = Mangum(app)
 
@@ -92,3 +107,4 @@ handler = Mangum(app)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
