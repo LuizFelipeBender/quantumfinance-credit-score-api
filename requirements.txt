@@ -4,7 +4,8 @@ joblib
 mlflow
 fastapi
 uvicorn
-python-dotenv
-streamlit
-httpx
 pydantic
+python-dotenv
+httpx
+boto3
+mangum

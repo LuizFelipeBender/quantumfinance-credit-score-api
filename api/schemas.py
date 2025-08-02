@@ -1,7 +1,8 @@
 
 from pydantic import BaseModel
 
-class CreditInput(BaseModel):
+
+class InputData(BaseModel):
     Annual_Income: float
     Monthly_Inhand_Salary: float
     Num_Bank_Accounts: int
@@ -15,7 +16,8 @@ class CreditInput(BaseModel):
     Credit_Utilization_Ratio: float
     Outstanding_Debt: float
     Monthly_Balance: float
-    Age:float
+    Age: float
 
-class CreditOutput(BaseModel):
+
+class PredictionOutput(BaseModel):
     score: str
