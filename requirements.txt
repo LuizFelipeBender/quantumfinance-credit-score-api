@@ -1,11 +1,8 @@
-pandas
-scikit-learn
-joblib
-mlflow
 fastapi
 uvicorn
-python-dotenv
-streamlit
-httpx
-pydantic
 mangum
+pandas
+joblib
+boto3
+mlflow
+pydantic
