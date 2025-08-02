@@ -18,8 +18,10 @@ app = FastAPI()
 
 # Segurança via Bearer Token
 security = HTTPBearer()
-SECRET_TOKEN = "secret-token-123"  # Pode ser movido para variável de ambiente
-
+SECRET_TOKEN = {
+    "secret-token-123": "parceiro_a",
+    "secret-token-456": "parceiro_b"
+}
 # Parâmetros do S3
 S3_BUCKET = "quantumfinance-mlflow-artifacts"
 S3_KEY = "models/model_latest.pkl"

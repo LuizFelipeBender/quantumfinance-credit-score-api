@@ -1,3 +1,6 @@
 .terraform/
 terraform.tfstate
 terraform.tfstate.backup
+__pycache__/
+*.py[cod]
+*.pyo
