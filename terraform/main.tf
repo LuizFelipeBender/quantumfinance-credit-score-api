@@ -103,3 +103,10 @@ resource "aws_cloudwatch_log_group" "lambda_log" {
 output "api_url" {
   value = aws_apigatewayv2_api.quantum_api.api_endpoint
 }
+resource "aws_lambda_permission" "allow_apigw_invoke" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.quantum_api_lambda.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.quantum_api.execution_arn}/*/*/{proxy+}"
+}
