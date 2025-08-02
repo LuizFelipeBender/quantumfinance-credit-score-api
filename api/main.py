@@ -9,9 +9,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from mangum import Mangum
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import os
 
-
+# Definição da classe InputData diretamente aqui
 class InputData(BaseModel):
     Annual_Income: float
     Monthly_Inhand_Salary: float
@@ -36,12 +35,10 @@ class InputData(BaseModel):
     Credit_History_Age: str
     Occupation: str
 
-
-# MLflow tracking URI
+# Configurações MLflow
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-# Inicializa FastAPI
 app = FastAPI()
 
 # Segurança via Bearer Token
@@ -50,11 +47,11 @@ SECRET_TOKEN = {
     "secret-token-123": "parceiro_a",
     "secret-token-456": "parceiro_b"
 }
+
 # Parâmetros do S3
 S3_BUCKET = "quantumfinance-mlflow-artifacts"
 S3_KEY = "models/model_latest.pkl"
 
-# Função para carregar modelo do S3
 def load_model_from_s3():
     try:
         s3 = boto3.client("s3")
@@ -67,7 +64,6 @@ def load_model_from_s3():
         print(f"❌ Erro ao carregar modelo do S3: {e}")
         return None
 
-# Carrega o modelo na inicialização
 model = load_model_from_s3()
 expected_columns = None
 
@@ -81,11 +77,9 @@ if model:
     except Exception as e:
         print("⚠️ Não foi possível identificar colunas esperadas:", e)
 
-# Healthcheck
 @app.get("/")
 def health():
     return {"status": "ok"}
-
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -94,8 +88,6 @@ async def favicon():
         return FileResponse(favicon_path)
     return {}
 
-
-# Endpoint de predição
 @app.post("/predict")
 def predict(
     input: InputData,
@@ -111,7 +103,6 @@ def predict(
     try:
         data = pd.DataFrame([input.dict()])
 
-        # Validação de colunas esperadas
         if expected_columns:
             missing = set(expected_columns) - set(data.columns)
             if missing:
@@ -127,7 +118,7 @@ def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     if token not in SECRET_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     try:
         s3 = boto3.client("s3")
         response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="models/")
@@ -135,16 +126,14 @@ def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
         return {"available_models": files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar modelos: {str(e)}")
+
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
 
-
-# Lambda handler para AWS
+# Handler AWS Lambda com Mangum
 handler = Mangum(app)
 
-# Execução local
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
