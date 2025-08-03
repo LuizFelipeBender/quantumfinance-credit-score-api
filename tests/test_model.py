@@ -1,7 +1,7 @@
 import requests
 
 def test_api_predict():
-    url = "http://localhost:8000/predict"
+    url = "https://16h3b2a35d.execute-api.us-east-1.amazonaws.com/predict"
     headers = {"Authorization": "Bearer secret-token-123"}
     sample = {
         "Annual_Income": 0,
