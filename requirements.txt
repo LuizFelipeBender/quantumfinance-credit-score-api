@@ -7,3 +7,4 @@ joblib
 boto3
 mlflow
 pydantic
+imblearn
