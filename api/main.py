@@ -10,7 +10,6 @@ from mangum import Mangum
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-# Definição da classe InputData diretamente aqui
 class InputData(BaseModel):
     Annual_Income: float
     Monthly_Inhand_Salary: float
@@ -35,20 +34,17 @@ class InputData(BaseModel):
     Credit_History_Age: str
     Occupation: str
 
-# Configurações MLflow
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 app = FastAPI()
 
-# Segurança via Bearer Token
 security = HTTPBearer()
 SECRET_TOKEN = {
     "secret-token-123": "parceiro_a",
     "secret-token-456": "parceiro_b"
 }
 
-# Parâmetros do S3
 S3_BUCKET = "quantumfinance-mlflow-artifacts"
 S3_KEY = "models/model_latest.pkl"
 
@@ -131,7 +127,6 @@ def list_models(credentials: HTTPAuthorizationCredentials = Depends(security)):
 def ping():
     return {"message": "pong"}
 
-# Handler AWS Lambda com Mangum
 handler = Mangum(app)
 
 if __name__ == "__main__":
